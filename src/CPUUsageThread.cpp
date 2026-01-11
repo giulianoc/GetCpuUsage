@@ -28,6 +28,8 @@ Copyright (C) Giuliano Catrambone (giulianocatrambone@gmail.com)
 #include <deque>
 #include <numeric>
 #include <spdlog/spdlog.h>
+#include <spdlog/fmt/ranges.h>
+
 
 CPUUsageThread::~CPUUsageThread()
 {
