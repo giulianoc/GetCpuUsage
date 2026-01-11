@@ -25,6 +25,7 @@ Copyright (C) Giuliano Catrambone (giulianocatrambone@gmail.com)
 
 #include "GetCpuUsage.h"
 
+#include <deque>
 #include <numeric>
 #include <spdlog/spdlog.h>
 
