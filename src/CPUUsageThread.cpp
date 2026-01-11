@@ -102,15 +102,6 @@ void CPUUsageThread::run()
 					avgCpuUsage = static_cast<double>(sum) / cpuUsageQueue.size();
 				}
 
-				SPDLOG_TRACE(
-					"cpuUsageThread"
-					// ", maxCpuUsage: {}"
-					", avgCpuUsage: {}"
-					", cpuUsageQueue: {}",
-					// maxCpuUsage,
-					avgCpuUsage,
-					fmt::join(cpuUsageQueue, ", "));
-
 				_cpuUsage.store(avgCpuUsage, std::memory_order_relaxed);
 			}
 			catch (std::exception &e)
@@ -119,17 +110,21 @@ void CPUUsageThread::run()
 					", e.what(): {}", e.what());
 			}
 
-			SPDLOG_INFO("diff: {}"
-				", cpuStatsUpdateIntervalInSeconds: {}",
-				std::chrono::duration_cast<std::chrono::seconds>(std::chrono::system_clock::now() - lastCPUStats).count(),
-				cpuStatsUpdateIntervalInSeconds
-			);
 			if (std::chrono::duration_cast<std::chrono::seconds>(std::chrono::system_clock::now() - lastCPUStats).count()
 				>= cpuStatsUpdateIntervalInSeconds)
 			{
 				lastCPUStats = std::chrono::system_clock::now();
 				try
 				{
+					SPDLOG_INFO(
+						"cpuUsageThread"
+						// ", maxCpuUsage: {}"
+						", avgCpuUsage: {}"
+						", cpuUsageQueue: {}",
+						// maxCpuUsage,
+						avgCpuUsage,
+						fmt::join(cpuUsageQueue, ", "));
+
 					newCPUUsageAvailable(avgCpuUsage);
 				}
 				catch (std::exception &e)
