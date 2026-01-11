@@ -21,12 +21,16 @@
 # with the authors.
 
 SET (SOURCES
-	GetCpuUsage.cpp
+		GetCpuUsage.cpp
+		CPUUsageThread.cpp
 )
 
 SET (HEADERS
-	GetCpuUsage.h
+		GetCpuUsage.h
+		CPUUsageThread.h
 )
+
+include_directories("${SPDLOG_INCLUDE_DIR}")
 
 add_library (GetCpuUsage SHARED ${SOURCES} ${HEADERS})
 
