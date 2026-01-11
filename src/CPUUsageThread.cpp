@@ -102,12 +102,7 @@ void CPUUsageThread::run()
 					"cpuUsageThread"
 					", lastCpuUsage: {}"
 					", cpuUsageQueue: {}", lastCpuUsage,
-					std::accumulate(
-						std::begin(cpuUsageQueue), std::end(cpuUsageQueue), std::string(),
-						[](const std::string &s, uint16_t cpuUsage)
-						{ return (s.empty() ? std::format("{}", cpuUsage) : std::format("{}, {}", s, cpuUsage)); }
-					)
-				);
+					fmt::join(cpuUsageQueue, ", "));
 
 				_cpuUsage.store(lastCpuUsage, std::memory_order_relaxed);
 			}
