@@ -74,39 +74,42 @@ void CPUUsageThread::run()
 
 	GetCpuUsage getCpuUsage;
 
+	std::deque<uint16_t> cpuUsageQueue;
+	constexpr int numberOfLastCPUUsageToBeChecked = 3;
+	for (int cpuUsageIndex = 0; cpuUsageIndex < numberOfLastCPUUsageToBeChecked; cpuUsageIndex++)
+		cpuUsageQueue.push_front(0);
+
 	while (!_stopSignal)
 	{
-		std::deque<uint16_t> cpuUsageQueue;
-		constexpr int numberOfLastCPUUsageToBeChecked = 3;
-		for (int cpuUsageIndex = 0; cpuUsageIndex < numberOfLastCPUUsageToBeChecked; cpuUsageIndex++)
-			cpuUsageQueue.push_front(0);
-
 		try
 		{
 			std::this_thread::sleep_for(std::chrono::milliseconds(200));
 
-			uint16_t lastCpuUsage = 0;
+			uint16_t maxCpuUsage = 0;
+			uint16_t avgCpuUsage = 0;
 			try
 			{
 				cpuUsageQueue.pop_back();
 				cpuUsageQueue.push_front(getCpuUsage.getCpuUsage());
 
-				// calcolo cpu
+				maxCpuUsage = *std::ranges::max_element(cpuUsageQueue);
 				{
-					for (const uint16_t cpuUsage : cpuUsageQueue)
-					{
-						if (cpuUsage > lastCpuUsage)
-							lastCpuUsage = cpuUsage;
-					}
+					const uint64_t sum = std::accumulate(
+						cpuUsageQueue.begin(),
+						cpuUsageQueue.end(),
+						uint64_t{0}
+					);
+					avgCpuUsage = static_cast<double>(sum) / cpuUsageQueue.size();
 				}
 
 				SPDLOG_INFO(
 					"cpuUsageThread"
-					", lastCpuUsage: {}"
-					", cpuUsageQueue: {}", lastCpuUsage,
+					", maxCpuUsage: {}"
+					", avgCpuUsage: {}"
+					", cpuUsageQueue: {}", maxCpuUsage, avgCpuUsage,
 					fmt::join(cpuUsageQueue, ", "));
 
-				_cpuUsage.store(lastCpuUsage, std::memory_order_relaxed);
+				_cpuUsage.store(maxCpuUsage, std::memory_order_relaxed);
 			}
 			catch (std::exception &e)
 			{
@@ -120,7 +123,7 @@ void CPUUsageThread::run()
 				lastCPUStats = std::chrono::system_clock::now();
 				try
 				{
-					newCPUUsageAvailable(lastCpuUsage);
+					newCPUUsageAvailable(maxCpuUsage);
 				}
 				catch (std::exception &e)
 				{

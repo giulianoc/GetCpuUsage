@@ -39,4 +39,6 @@ set(GetCpuUsage_VERSION_MAJOR 1)
 set(GetCpuUsage_VERSION_MINOR 0)
 
 add_subdirectory(src)
-
+if(GETCPUUSAGE_EXAMPLES)
+    add_subdirectory(examples/getCpuUsage)
+endif()
