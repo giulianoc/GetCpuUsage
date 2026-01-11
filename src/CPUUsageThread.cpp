@@ -119,6 +119,11 @@ void CPUUsageThread::run()
 					", e.what(): {}", e.what());
 			}
 
+			SPDLOG_INFO("diff: {}"
+				", cpuStatsUpdateIntervalInSeconds: {}",
+				std::chrono::duration_cast<std::chrono::seconds>(std::chrono::system_clock::now() - lastCPUStats).count(),
+				cpuStatsUpdateIntervalInSeconds
+			);
 			if (std::chrono::duration_cast<std::chrono::seconds>(std::chrono::system_clock::now() - lastCPUStats).count()
 				>= cpuStatsUpdateIntervalInSeconds)
 			{
