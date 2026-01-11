@@ -85,14 +85,14 @@ void CPUUsageThread::run()
 		{
 			std::this_thread::sleep_for(std::chrono::milliseconds(200));
 
-			uint16_t maxCpuUsage = 0;
+			// uint16_t maxCpuUsage = 0;
 			uint16_t avgCpuUsage = 0;
 			try
 			{
 				cpuUsageQueue.pop_back();
 				cpuUsageQueue.push_front(getCpuUsage.getCpuUsage());
 
-				maxCpuUsage = *std::ranges::max_element(cpuUsageQueue);
+				// maxCpuUsage = *std::ranges::max_element(cpuUsageQueue);
 				{
 					const uint64_t sum = std::accumulate(
 						cpuUsageQueue.begin(),
@@ -102,14 +102,16 @@ void CPUUsageThread::run()
 					avgCpuUsage = static_cast<double>(sum) / cpuUsageQueue.size();
 				}
 
-				SPDLOG_INFO(
+				SPDLOG_TRACE(
 					"cpuUsageThread"
-					", maxCpuUsage: {}"
+					// ", maxCpuUsage: {}"
 					", avgCpuUsage: {}"
-					", cpuUsageQueue: {}", maxCpuUsage, avgCpuUsage,
+					", cpuUsageQueue: {}",
+					// maxCpuUsage,
+					avgCpuUsage,
 					fmt::join(cpuUsageQueue, ", "));
 
-				_cpuUsage.store(maxCpuUsage, std::memory_order_relaxed);
+				_cpuUsage.store(avgCpuUsage, std::memory_order_relaxed);
 			}
 			catch (std::exception &e)
 			{
@@ -123,7 +125,7 @@ void CPUUsageThread::run()
 				lastCPUStats = std::chrono::system_clock::now();
 				try
 				{
-					newCPUUsageAvailable(maxCpuUsage);
+					newCPUUsageAvailable(avgCpuUsage);
 				}
 				catch (std::exception &e)
 				{
