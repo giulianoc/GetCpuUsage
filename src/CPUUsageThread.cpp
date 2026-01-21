@@ -27,7 +27,7 @@ Copyright (C) Giuliano Catrambone (giulianocatrambone@gmail.com)
 
 #include <deque>
 #include <numeric>
-#include <spdlog/spdlog.h>
+#include "ThreadLogger.h"
 #include <spdlog/fmt/ranges.h>
 
 
@@ -42,7 +42,7 @@ void CPUUsageThread::start()
 	if (_running)
 	{
 		const std::string errorMessage = "CPUUsageThread already running";
-		SPDLOG_ERROR(errorMessage);
+		LOG_ERROR(errorMessage);
 		throw std::runtime_error(errorMessage);
 	}
 
@@ -106,7 +106,7 @@ void CPUUsageThread::run()
 			}
 			catch (std::exception &e)
 			{
-				SPDLOG_ERROR("cpuUsage thread failed"
+				LOG_ERROR("cpuUsage thread failed"
 					", e.what(): {}", e.what());
 			}
 
@@ -116,7 +116,7 @@ void CPUUsageThread::run()
 				lastCPUStats = std::chrono::system_clock::now();
 				try
 				{
-					SPDLOG_INFO(
+					LOG_INFO(
 						"cpuUsageThread"
 						// ", maxCpuUsage: {}"
 						", avgCpuUsage: {}"
@@ -129,7 +129,7 @@ void CPUUsageThread::run()
 				}
 				catch (std::exception &e)
 				{
-					SPDLOG_ERROR("newCPUUsageAvailable failed"
+					LOG_ERROR("newCPUUsageAvailable failed"
 						", exception: {}",
 						e.what()
 					);
@@ -138,7 +138,7 @@ void CPUUsageThread::run()
 		}
 		catch (std::exception &e)
 		{
-			SPDLOG_ERROR(
+			LOG_ERROR(
 				"System::getCPUUsage failed"
 				", exception: {}",
 				e.what()

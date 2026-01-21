@@ -31,8 +31,14 @@ SET (HEADERS
 )
 
 include_directories("${SPDLOG_INCLUDE_DIR}")
+include_directories("${THREADLOGGER_INCLUDE_DIR}")
 
 add_library (GetCpuUsage SHARED ${SOURCES} ${HEADERS})
+
+if(APPLE)
+	link_directories(${THREADLOGGER_LIBRARY_DIRS})
+	target_link_libraries (GetCpuUsage ThreadLogger)
+endif()
 
 install (TARGETS GetCpuUsage DESTINATION lib)
 install (FILES ${HEADERS} DESTINATION include)
