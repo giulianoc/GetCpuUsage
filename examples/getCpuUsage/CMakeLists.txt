@@ -29,10 +29,9 @@ SET (HEADERS
 
 include_directories(${GETCPUUSAGE_INCLUDE_DIR})
 
-if(APPLE)
-#	link_directories("${OPENSSL_LIB_DIR}")
-endif()
-
 add_executable(getCpuUsage ${SOURCES} ${HEADERS})
 
+link_directories(${THREADLLOGGER_LIBRARY_DIR})
+
 target_link_libraries (getCpuUsage GetCpuUsage)
+target_link_libraries (getCpuUsage ThreadLogger)
