@@ -28,7 +28,8 @@ Copyright (C) Giuliano Catrambone (giulianocatrambone@gmail.com)
 class CPUUsageThread
 {
 public:
-	CPUUsageThread(): _running(false), _stopSignal(false) {};
+	explicit CPUUsageThread(const int16_t cpuStatsUpdateIntervalInSeconds = 10):
+		_running(false), _stopSignal(false), _cpuStatsUpdateIntervalInSeconds(cpuStatsUpdateIntervalInSeconds) {};
 	virtual ~CPUUsageThread();
 
 	void start();
@@ -42,6 +43,7 @@ private:
 	std::atomic<bool> _running;
 	std::atomic<bool> _stopSignal;
 	std::string _networkInterfaceToMonitor;
+	int16_t _cpuStatsUpdateIntervalInSeconds;
 
 	std::atomic<uint16_t> _cpuUsage;
 

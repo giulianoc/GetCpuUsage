@@ -69,7 +69,6 @@ bool CPUUsageThread::isRunning() const
 
 void CPUUsageThread::run()
 {
-	int cpuStatsUpdateIntervalInSeconds = 10;
 	std::chrono::system_clock::time_point lastCPUStats = std::chrono::system_clock::now();
 
 	GetCpuUsage getCpuUsage;
@@ -110,8 +109,8 @@ void CPUUsageThread::run()
 					", e.what(): {}", e.what());
 			}
 
-			if (std::chrono::duration_cast<std::chrono::seconds>(std::chrono::system_clock::now() - lastCPUStats).count()
-				>= cpuStatsUpdateIntervalInSeconds)
+			if (std::chrono::duration_cast<std::chrono::seconds>(std::chrono::system_clock::now() - lastCPUStats).count() >=
+				_cpuStatsUpdateIntervalInSeconds)
 			{
 				lastCPUStats = std::chrono::system_clock::now();
 				try
