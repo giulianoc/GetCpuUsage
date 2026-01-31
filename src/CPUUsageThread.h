@@ -23,13 +23,16 @@ Copyright (C) Giuliano Catrambone (giulianocatrambone@gmail.com)
 
 #pragma once
 #include <cstdint>
+#include <spdlog/logger.h>
 #include <thread>
 
 class CPUUsageThread
 {
 public:
-	explicit CPUUsageThread(const int16_t cpuStatsUpdateIntervalInSeconds = 10):
-		_running(false), _stopSignal(false), _cpuStatsUpdateIntervalInSeconds(cpuStatsUpdateIntervalInSeconds) {};
+	explicit CPUUsageThread(const int16_t cpuStatsUpdateIntervalInSeconds = 10,
+		const std::shared_ptr<spdlog::logger>& logger = nullptr):
+		_running(false), _stopSignal(false), _cpuStatsUpdateIntervalInSeconds(cpuStatsUpdateIntervalInSeconds),
+		_logger(logger){};
 	virtual ~CPUUsageThread();
 
 	void start();
@@ -44,6 +47,7 @@ private:
 	std::atomic<bool> _stopSignal;
 	std::string _networkInterfaceToMonitor;
 	int16_t _cpuStatsUpdateIntervalInSeconds;
+	std::shared_ptr<spdlog::logger> _logger;
 
 	std::atomic<uint16_t> _cpuUsage;
 

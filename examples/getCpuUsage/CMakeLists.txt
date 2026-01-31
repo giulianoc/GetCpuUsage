@@ -27,6 +27,7 @@ SET (SOURCES
 SET (HEADERS
 )
 
+include_directories("${SPDLOG_INCLUDE_DIR}")
 include_directories(${GETCPUUSAGE_INCLUDE_DIR})
 
 add_executable(getCpuUsage ${SOURCES} ${HEADERS})

@@ -69,6 +69,10 @@ bool CPUUsageThread::isRunning() const
 
 void CPUUsageThread::run()
 {
+	std::optional<ThreadLogger> threadLogger;
+	if (_logger)
+		threadLogger.emplace(_logger);
+
 	std::chrono::system_clock::time_point lastCPUStats = std::chrono::system_clock::now();
 
 	GetCpuUsage getCpuUsage;
