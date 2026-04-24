@@ -1,6 +1,10 @@
 
-#ifndef GetCpuUsage_h
-#define GetCpuUsage_h
+#pragma once
+
+#include <array>
+#include <cstddef>
+#include <cstdint>
+#include <optional>
 
 #ifdef WIN32
 
@@ -241,35 +245,39 @@ typedef class GetCpuUsage
 
 #else
 
-#define CPUSMOOTHNESS 1
-
 class GetCpuUsage
 {
-  private:
-	unsigned long long oload;
-	unsigned long long ototal;
-	int firsttimes;
-	int current;
-	int cpu_average_list[CPUSMOOTHNESS];
+public:
+	// Se chiami ogni 200ms:
+	// CPUSMOOTHNESS = 5 → 1 secondo di smoothing
+	// CPUSMOOTHNESS = 10 → 2 secondi (spesso gradevole per GUI)
+	// CPUSMOOTHNESS = 15 → 3 secondi (più “lento” ma stabile)
+	static constexpr std::size_t CPUSMOOTHNESS = 10; // 10 * 200ms = 2s di smoothing
 
-  public:
-	GetCpuUsage(void)
+	GetCpuUsage()
 	{
-		oload = 0;
-		ototal = 0;
-		firsttimes = 0;
-		current = 0;
-
-		/**
-			Since we calculate the CPU usage by two samplings,
-			the first call to getCpuUsage () return 0 and keeps
-			the values for the next sampling.
-		*/
+		// Since we calculate the CPU usage by two samplings,
+		// the first call to getCpuUsage () return 0 and keeps
+		// the values for the next sampling.
 		getCpuUsage();
 	};
+	int getCpuUsage(); // 0..100
 
-	int getCpuUsage(void);
+private:
+	struct CpuTimes {
+		std::uint64_t user=0, nice=0, system=0, idle=0;
+		std::uint64_t iowait=0, irq=0, softirq=0, steal=0;
+		std::uint64_t guest=0, guestNice=0;
+	};
+
+	static std::optional<CpuTimes> readCpuTimes();
+
+	bool hasPrev_ = false;
+	CpuTimes prev_{};
+
+	std::array<int, CPUSMOOTHNESS> window_{};
+	std::size_t idx_ = 0;
+	std::size_t filled_ = 0;
 };
 
-#endif
 #endif

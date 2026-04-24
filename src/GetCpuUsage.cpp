@@ -1,4 +1,6 @@
 
+#include <fstream>
+#include <numeric>
 #ifdef WIN32
 
 ///////////////////////////////////////////////////////////////////
@@ -318,57 +320,79 @@ int GetCpuUsage::getCpuUsage(void)
 
 #else // LINUX
 
-/* returns current CPU load in percent, 0 to 100 */
+#include <cmath>
+#include <algorithm> // clamp
 
-int GetCpuUsage::getCpuUsage(void)
-
+std::optional<GetCpuUsage::CpuTimes> GetCpuUsage::readCpuTimes()
 {
-	unsigned int cpuload;
-	unsigned long long load, total;
-	unsigned long long ab, ac, ad, ae;
-	FILE *stat;
-	int i;
+	std::ifstream in("/proc/stat");
+	if (!in)
+		return std::nullopt;
 
-	stat = fopen("/proc/stat", "r");
-	fscanf(stat, "%*s %lld %lld %lld %lld", &ab, &ac, &ad, &ae);
-	fclose(stat);
+	std::string label;
+	CpuTimes t{};
 
-	if (firsttimes == 0)
-	{
-		for (i = 0; i < CPUSMOOTHNESS; i++)
-			cpu_average_list[i] = 0;
+	// Legge solo la prima riga: "cpu  user nice system idle iowait irq softirq steal guest guest_nice"
+	if (!(in >> label) || label != "cpu")
+		return std::nullopt;
+
+	// I campi extra potrebbero non esistere su kernel vecchi: quelli non letti restano a 0
+	in >> t.user >> t.nice >> t.system >> t.idle
+	   >> t.iowait >> t.irq >> t.softirq >> t.steal
+	   >> t.guest >> t.guestNice;
+
+	return t;
+}
+
+int GetCpuUsage::getCpuUsage()
+{
+	const auto curOpt = readCpuTimes();
+	if (!curOpt) {
+		// Se vuoi: return ultimo valore medio invece di 0
+		return 0;
 	}
-	/* Wait until we have CPUSMOOTHNESS messures */
-	if (firsttimes != CPUSMOOTHNESS)
-		firsttimes++;
 
-	/* Find out the CPU load */
-	/* user + sys = load
-	 * total = total */
-	load = ab + ac + ad;	   /* cpu.user + cpu.sys; */
-	total = ab + ac + ad + ae; /* cpu.total; */
+	const CpuTimes cur = *curOpt;
 
-	/* Calculates and average from the last CPUSMOOTHNESS messures */
-	if (total != ototal)
-		cpu_average_list[current] = (100 * (load - oload)) / (total - ototal);
-	else
-		cpu_average_list[current] = (load - oload);
+	if (!hasPrev_)
+	{
+		prev_ = cur;
+		hasPrev_ = true;
+		return 0; // warm-up
+	}
 
-	current++;
-	if (current == CPUSMOOTHNESS)
-		current = 0;
+	const std::uint64_t prevIdle = prev_.idle + prev_.iowait;
+	const std::uint64_t curIdle  = cur.idle  + cur.iowait;
 
-	oload = load;
-	ototal = total;
+	const std::uint64_t prevNonIdle = prev_.user + prev_.nice + prev_.system +
+									  prev_.irq + prev_.softirq + prev_.steal;
+	const std::uint64_t curNonIdle  = cur.user + cur.nice + cur.system +
+									  cur.irq + cur.softirq + cur.steal;
 
-	if (firsttimes != CPUSMOOTHNESS)
+	const std::uint64_t prevTotal = prevIdle + prevNonIdle;
+	const std::uint64_t curTotal  = curIdle  + curNonIdle;
+
+	prev_ = cur;
+
+	const std::uint64_t totald = curTotal - prevTotal;
+	const std::uint64_t idled  = curIdle - prevIdle;
+
+	if (totald == 0)
 		return 0;
 
-	cpuload = 0;
+	const double usage = static_cast<double>(totald - idled) / static_cast<double>(totald); // 0..1
+	const int percent = static_cast<int>(std::lround(std::clamp(usage, 0.0, 1.0) * 100.0));
 
-	for (i = 0; i < CPUSMOOTHNESS; i++)
-		cpuload += cpu_average_list[i];
-	return (cpuload / CPUSMOOTHNESS);
+	window_[idx_] = percent;
+	idx_ = (idx_ + 1) % CPUSMOOTHNESS;
+	filled_ = std::min(filled_ + 1, CPUSMOOTHNESS);
+
+	if (filled_ < CPUSMOOTHNESS)
+		return 0; // warm-up come la tua logica
+
+	const int sum = std::accumulate(window_.begin(), window_.end(), 0);
+	return sum / CPUSMOOTHNESS;
 }
+
 #endif
 #endif
